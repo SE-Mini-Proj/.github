@@ -1,0 +1,41 @@
+name: Organization Central CI/CD Pipeline
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  pull_request:
+    branches: [ "main", "master" ]
+  workflow_dispatch:
+
+jobs:
+  org-validation:
+    name: Validate Org Repository & Assets
+    runs-on: ubuntu-latest
+    steps:
+      - name: 📥 Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: 🔍 Check Markdown & Specification Links
+        run: |
+          echo "Validating Organization Markdown files & Profile assets..."
+          test -f README.md || test -f profile/README.md || (echo "No README found" && exit 1)
+          echo "Organization assets valid!"
+
+  matrix-test-runner:
+    name: Organization Test & Build Matrix
+    runs-on: ubuntu-latest
+    steps:
+      - name: 📥 Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: 🟢 Detect & Test Node.js Projects
+        run: |
+          if [ -f "package.json" ]; then
+            echo "Node.js project detected. Installing & Testing..."
+            npm ci || npm install
+            if grep -q '"test"' package.json; then
+              npm test
+            fi
+          else
+            echo "Non-Node repository or Documentation repo detected."
+          fi
